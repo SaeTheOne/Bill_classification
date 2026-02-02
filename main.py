@@ -59,21 +59,27 @@ for i in range(0, len(csv1)):
             reader = csv.reader(file1)
             for row in reader:
                 len1.append(row)
+                print(len1)
     # file = os.path.splitext(os.path.basename(csv1[i]))[0]  # 拆出文件名
     wechat = ['交易时间', '交易类型', '交易对方', '商品', '收/支', '金额(元)', '支付方式', '当前状态', '交易单号', '商户单号', '备注']
-    alipay = ['交易时间', '交易分类', '交易对方', '对方账号', '商品说明', '收/支', '金额', '收/付款方式', '交易状态', '交易订单号', '商家订单号', '备注']
+    alipay = ['交易时间', '交易分类', '交易对方', '对方账号', '商品说明', '收/支', '金额', '收/付款方式', '交易状态', '交易订单号', '商家订单号', '备注', '']
     if wechat in len1:
         del (len1[0:len1.index(wechat)])
         csv_name = 'wechat'
-    elif alipay in len1:
+        # print(len1)
+    if alipay in len1:
+        # print('yes')
         del (len1[0:len1.index(alipay)])
         csv_name = 'alipay'
+        # print(len1)
+    # print(csv_name)
     len2 = []
     #       [   0           1          2          3           4          5          6            7                8          9            10            11
     # 支付宝['交易时间', '交易分类', '交易对方', '对方账号', '商品说明', '收/支',    '金额',    '收/付款方式',   '交易状态', ' 交易订单号', ' 商家订单号', '备注']
     # 微信  ['交易时间', '交易类型', '交易对方', '商品',     '收/支',    '金额(元)', '支付方式', '当前状态',     '交易单号',   '商户单号',     '备注']
-    for b in range(0, len(len1)):
+    for b in range(1, len(len1)):
         len2 = len1[b]
+        print(len2)
         date_time.append(dateutil.parser.parse(len2[0]))  # 交易时间
         transaction_type.append(len2[1])   # 交易分类
         store.append(len2[2])  # 交易对方
@@ -160,3 +166,4 @@ except OSError:
 yimu_name = folder_path + "/完成/sc.xlsx"
 yimu.save(yimu_name)
 os.startfile(folder_path + "/完成")
+
