@@ -179,27 +179,41 @@ class ProcessingWorker(QThread):
                     store = str(row[2]).strip() if len(row) > 2 else ''
                     commodity = str(row[3]).strip() if len(row) > 3 else ''
                     money_str = str(row[5]).strip() if len(row) > 5 else ''
-                    payment = str(row[6]).strip() if len(row) > 6 else ''
+                    payment_raw = str(row[6]).strip() if len(row) > 6 else ''
                     trans_type = str(row[1]).strip() if len(row) > 1 else ''
                     search_text = f"{store} {commodity}"
-                    if payment in ["零钱", "/", "", "None"]:
+                    if payment_raw in ["零钱", "/", "", "None"]:
                         payment = "微信钱包"
+                    else:
+                        payment = payment_raw
 
                 # ========== 支付宝 ==========
                 else:
-                    in_out = str(row[5]).strip() if len(row) > 5 else ''      # 收/支
-                    trans_type = str(row[1]).strip() if len(row) > 1 else ''  # 交易分类
-                    store = str(row[2]).strip() if len(row) > 2 else ''       # 交易对方
-                    # 对方账号 row[3] 不需要
-                    commodity = str(row[4]).strip() if len(row) > 4 else ''   # 商品说明
-                    money_str = str(row[6]).strip() if len(row) > 6 else ''   # 金额
-                    payment = str(row[7]).strip() if len(row) > 7 else ''     # 收/付款方式
+                    in_out = str(row[5]).strip() if len(row) > 5 else ''
+                    
+                    # 先判断不计收支，直接跳过
+                    if in_out == "不计收支" or not in_out:
+                        continue
+                    
+                    store = str(row[2]).strip() if len(row) > 2 else ''
+                    commodity = str(row[4]).strip() if len(row) > 4 else ''
+                    money_str = str(row[6]).strip() if len(row) > 6 else ''
+                    payment_raw = str(row[7]).strip() if len(row) > 7 else ''
+                    trans_type = str(row[1]).strip() if len(row) > 1 else ''
                     search_text = f"{commodity} {store}"
-                    if payment in ["/", "", "None"]:
-                        payment = "支付宝"
 
-                if in_out == "不计收支" or not in_out:
-                    continue
+                    # 统一支付宝支付方式
+                    if "账户余额" in payment_raw:
+                        payment = "支付宝"
+                    elif "花呗" in payment_raw:
+                        payment = "花呗"
+                    else:
+                        import re
+                        match = re.search(r'([\u4e00-\u9fa5]+(?:储蓄卡|信用卡))\((\d+)\)', payment_raw)
+                        if match:
+                            payment = f"{match.group(1)}({match.group(2)})"
+                        else:
+                            payment = payment_raw
 
                 # 解析金额
                 money_match = re.search(r"-?\d+\.?\d*", money_str)
@@ -235,7 +249,7 @@ class ProcessingWorker(QThread):
                 continue
 
         print(f"  成功处理 {processed_count} 笔交易，{unclassified_count} 笔未分类")
-
+        
     def _match_rules(self, text, rules_str):
         """匹配规则"""
         if not rules_str:
