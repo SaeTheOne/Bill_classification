@@ -1,0 +1,345 @@
+html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 智能账单分类助手 - 一键复制</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #f0f6fc;
+        }
+        .subtitle {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 22px 26px;
+            margin-bottom: 18px;
+            position: relative;
+        }
+        .box h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .box h2 .tag {
+            font-size: 11px;
+            background: #238636;
+            color: #fff;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .box p {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .code {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e6edf3;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 320px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .btn-copy {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 5px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        .btn-copy:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+        .btn-copy.ok {
+            background: #238636;
+            border-color: #238636;
+            color: #fff;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .btn-group .btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+        .btn-group .btn:hover {
+            background: #30363d;
+        }
+        .btn-group .btn.green {
+            background: #238636;
+            border-color: #238636;
+            color: #fff;
+        }
+        .btn-group .btn.green:hover {
+            background: #2ea043;
+        }
+        .tip {
+            color: #8b949e;
+            font-size: 13px;
+            background: #0d1117;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border-left: 3px solid #58a6ff;
+            margin-top: 10px;
+        }
+        .tip strong {
+            color: #f0f6fc;
+        }
+        .status-bar {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px 18px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .status-bar .path {
+            color: #8b949e;
+            font-size: 13px;
+            font-family: monospace;
+        }
+        .status-bar .status {
+            color: #3fb950;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid #30363d;
+            margin: 16px 0;
+        }
+        @media (max-width: 640px) {
+            .box {
+                padding: 16px;
+            }
+            .code {
+                font-size: 12px;
+                padding: 10px;
+                max-height: 250px;
+            }
+            .btn-group .btn {
+                font-size: 12px;
+                padding: 6px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 智能账单分类助手</h1>
+        <p class="subtitle">点击「复制命令」→ 到 PowerShell 粘贴执行 · 按顺序操作</p>
+
+        <!-- ========== 步骤1 ========== -->
+        <div class="box">
+            <h2>📁 步骤1：进入项目目录</h2>
+            <div class="code" id="c1">cd F:\Desktop\xposed\Bill_classification</div>
+            <button class="btn-copy" onclick="copyCode('c1',this)">📋 复制命令</button>
+        </div>
+
+        <!-- ========== 步骤2 ========== -->
+        <div class="box">
+            <h2>📁 步骤2：创建 README.md <span class="tag">推荐</span></h2>
+            <div class="code" id="c2">
+                @'
+                # 智能账单分类助手
+
+                一个基于 PySide6 的本地账单分类工具，支持微信和支付宝账单的自动分类。
+
+                ## ✨ 功能特点
+
+                - 📊 支持微信、支付宝账单导入（CSV/Excel 格式）
+                - 🏷️ 三级分类体系（一级分类 → 二级分类 → 三级分类）
+                - 🔍 正则表达式规则匹配，精准分类
+                - ✏️ 用户自定义关键词追加（无需修改系统规则）
+                - 📝 未分类交易自动导出，方便补充规则
+                - 💾 分类规则可视化编辑（增删改查）
+                - 🎯 右键菜单 + Delete 键快速删除分类
+                - 📱 界面自适应屏幕大小
+
+                ## 📁 项目结构
+Bill_classification/
+├── main.py # 程序入口
+├── categories_config.json # 系统分类规则
+├── user_keywords.json # 用户追加的关键词
+├── core/
+│ ├── init.py
+│ ├── category_manager.py # 分类管理核心
+│ ├── worker.py # 后台处理线程
+│ └── user_keywords_manager.py # 用户关键词管理
+└── ui/
+├── init.py
+├── main_window.py # 主窗口
+├── category_dialog.py # 分类管理对话框
+└── widgets.py # 自定义控件
+
+text
+
+## 🚀 快速开始
+
+### 1. 克隆项目
+
+```bash
+git clone https://github.com/你的用户名/Bill_classification.git
+cd Bill_classification
+2. 创建虚拟环境（推荐）
+bash
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1  # Windows
+3. 安装依赖
+bash
+pip install PySide6 openpyxl python-dateutil
+4. 运行
+bash
+python main.py
+📖 使用说明
+导入账单
+将微信/支付宝导出的 CSV/Excel 文件拖入程序窗口
+
+点击「开始处理」按钮
+
+程序会自动分类并生成 完成/sc.xlsx
+
+管理分类规则
+点击菜单栏「分类管理」→「管理分类规则」：
+
+添加分类：点击对应的添加按钮（支持批量，用空格分隔）
+
+重命名：双击分类名称
+
+删除：右键菜单或按 Delete 键
+
+追加关键词：选择三级分类，点击「追加关键词」
+
+分类层级
+text
+支出 (一级)
+├── 食品餐饮 (二级)
+│   ├── 三餐 (三级) ← 规则在此
+│   ├── 零食 (三级)
+│   └── 饮料酒水 (三级)
+├── 健康医疗 (二级)
+│   └── 医院 (三级)
+└── ...
+收入 (一级)
+├── 工资 (二级)
+├── 收红包 (二级)
+└── ...
+用户关键词 vs 系统规则
+特性	系统规则	用户关键词
+文件	categories_config.json	user_keywords.json
+优先级	低	高
+修改方式	编辑 JSON 文件	UI 界面追加
+匹配方式	正则表达式	包含匹配
+💡 用户关键词优先级更高，适合快速添加自定义分类，不会破坏系统规则。
+
+🔧 配置文件说明
+categories_config.json
+系统分类规则，使用正则表达式匹配：
+
+json
+{
+  "支出": {
+    "食品餐饮": {
+      "三餐": "餐饮|饭店|餐厅|食堂|快餐|早餐|午餐|晚餐|夜宵|外卖|盒饭|便当",
+      "零食": "零食|小吃|饼干|薯片|糖果|巧克力|坚果|果冻|辣条|薯条"
+    }
+  }
+}
+user_keywords.json
+用户追加的关键词，由 UI 管理：
+
+json
+{
+  "支出/食品餐饮/饮料酒水": ["桃桃乌龙", "芒果布丁"],
+  "支出/出行交通/共享单车": ["先骑后付"]
+}
+📤 输出格式
+处理完成后生成 完成/sc.xlsx：
+
+日期	收支类型	金额	类别	子类	所属账本	收支账户	备注
+2026-06-27	支出	33.4	食品餐饮	三餐	日常账本	微信钱包	...
+未分类交易会生成 完成/未分类交易.xlsx。
+
+📋 依赖
+Python 3.8+
+
+PySide6 >= 6.0.0
+
+openpyxl >= 3.0.0
+
+python-dateutil >= 2.8.0
+
+📄 许可证
+MIT License
+'@ | Out-File -FilePath README.md -Encoding UTF8
+
+</div> <button class="btn-copy" onclick="copyCode('c2',this)">📋 复制命令</button> </div> <!-- ========== 步骤3 ========== --> <div class="box"> <h2>📁 步骤3：创建 .gitignore</h2> <div class="code" id="c3"> @" # Python __pycache__/ *.pyc *.pyo .venv/ .venv-1/ venv/ dist/ build/ *.egg-info/
+IDE
+.vscode/
+.idea/
+*.swp
+
+项目
+完成/
+*.bak
+user_keywords.json
+"@ | Out-File -FilePath .gitignore -Encoding UTF8
+
+</div> <button class="btn-copy" onclick="copyCode('c3',this)">📋 复制命令</button> </div> <!-- ========== 步骤4 ========== --> <div class="box"> <h2>📁 步骤4：提交并推送 <span class="tag">完成</span></h2> <div class="code" id="c4"> git add . git commit -m "添加 README.md 和 .gitignore" git push origin main </div> <button class="btn-copy" onclick="copyCode('c4',this)">📋 复制命令</button> </div> <!-- ========== 状态栏 ========== --> <div class="status-bar"> <span class="path">📂 F:\Desktop\xposed\Bill_classification</span> <span class="status">✅ 就绪</span> </div> <div class="tip"> 💡 <strong>提示：</strong>按顺序点击「复制命令」→ 在 PowerShell 中右键粘贴 → 回车执行 </div> </div> <script> function copyCode(id, btn) { const el = document.getElementById(id); const text = el.textContent; navigator.clipboard.writeText(text).then(() => { btn.textContent = '✅ 已复制'; btn.classList.add('ok'); setTimeout(() => { btn.textContent = '📋 复制命令'; btn.classList.remove('ok'); }, 1500); }).catch(() => { // fallback const range = document.createRange(); range.selectNode(el); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); document.execCommand('copy'); btn.textContent = '✅ 已复制'; btn.classList.add('ok'); setTimeout(() => { btn.textContent = '📋 复制命令'; btn.classList.remove('ok'); }, 1500); }); } </script></body> </html> ```
