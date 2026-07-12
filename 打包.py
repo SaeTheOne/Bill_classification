@@ -1,1 +1,0 @@
-import pyinstallpyinstller --clean - F.\bili_classification.py
