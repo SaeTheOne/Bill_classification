@@ -93,81 +93,122 @@ class ProcessingWorker(QThread):
     def _detect_file_type(self, header_row):
         wechat_headers = ['交易时间', '交易类型', '交易对方', '商品', '收/支', '金额(元)']
         alipay_headers = ['交易时间', '交易分类', '交易对方', '对方账号', '商品说明', '收/支']
+        
+        # 检查微信
         wechat_match = sum(1 for h in wechat_headers if h in header_row)
         if wechat_match >= 3:
             return 'wechat'
+        
+        # 检查支付宝
         alipay_match = sum(1 for h in alipay_headers if h in header_row)
         if alipay_match >= 3:
             return 'alipay'
+        
         return None
+
+    def _find_header_row(self, data_rows):
+        """查找表头行"""
+        wechat_keywords = ['交易时间', '交易类型', '交易对方', '商品']
+        alipay_keywords = ['交易时间', '交易分类', '交易对方', '商品说明']
+        
+        for idx, row in enumerate(data_rows):
+            row_str = [str(cell).strip() for cell in row if cell]
+            # 检查微信
+            if all(k in row_str for k in wechat_keywords[:3]):
+                return idx, 'wechat'
+            # 检查支付宝
+            if all(k in row_str for k in alipay_keywords[:3]):
+                return idx, 'alipay'
+        
+        return -1, None
 
     def _process_file(self, file_path, all_data, unclassified_list):
         data_rows = self._read_file(file_path)
         if not data_rows:
             print(f"  跳过: 无法读取文件 {file_path}")
             return
+
         print(f"  共 {len(data_rows)} 行数据")
+
+        # 查找表头行
         file_type = None
         header_row_index = 0
-        header_row = [str(cell).strip() for cell in data_rows[0] if cell]
-        file_type = self._detect_file_type(header_row)
-        if not file_type:
-            for idx, row in enumerate(data_rows):
-                row_str = [str(cell).strip() for cell in row if cell]
-                if '交易时间' in row_str and '交易对方' in row_str:
-                    if '商品' in row_str:
-                        file_type = 'wechat'
-                    elif '对方账号' in row_str:
-                        file_type = 'alipay'
-                    header_row_index = idx
-                    break
+
+        for idx, row in enumerate(data_rows):
+            row_str = [str(cell).strip() for cell in row if cell]
+            # 微信表头
+            if '交易时间' in row_str and '交易类型' in row_str and '商品' in row_str:
+                file_type = 'wechat'
+                header_row_index = idx
+                break
+            # 支付宝表头
+            if '交易时间' in row_str and '交易分类' in row_str and '商品说明' in row_str:
+                file_type = 'alipay'
+                header_row_index = idx
+                break
+
         if not file_type:
             print(f"  跳过: 无法识别文件格式")
             return
+
         print(f"  识别为: {file_type}")
-        if header_row_index > 0:
-            data_rows = data_rows[header_row_index + 1:]
-            print(f"  找到表头在第 {header_row_index + 1} 行")
-        else:
-            data_rows = data_rows[1:]
+        print(f"  找到表头在第 {header_row_index + 1} 行")
+
+        # 从表头下一行开始
+        data_rows = data_rows[header_row_index + 1:]
+
         print(f"  开始处理 {len(data_rows)} 行数据...")
+
         processed_count = 0
         unclassified_count = 0
 
         for row_idx, row in enumerate(data_rows, 1):
-            if len(row) < 5:
+            if len(row) < 6:
                 continue
+
             try:
+                # 解析日期
                 date_str = str(row[0]).strip() if row[0] else ''
                 if not date_str:
                     continue
-                if isinstance(row[0], (datetime, date)):
-                    date_obj = row[0]
+                date_obj = dateutil.parser.parse(date_str)
+
+                # ========== 微信 ==========
+                if file_type == 'wechat':
+                    in_out = str(row[4]).strip() if len(row) > 4 else ''
+                    store = str(row[2]).strip() if len(row) > 2 else ''
+                    commodity = str(row[3]).strip() if len(row) > 3 else ''
+                    money_str = str(row[5]).strip() if len(row) > 5 else ''
+                    payment = str(row[6]).strip() if len(row) > 6 else ''
+                    trans_type = str(row[1]).strip() if len(row) > 1 else ''
+                    search_text = f"{store} {commodity}"
+                    if payment in ["零钱", "/", "", "None"]:
+                        payment = "微信钱包"
+
+                # ========== 支付宝 ==========
                 else:
-                    date_obj = dateutil.parser.parse(date_str)
-                in_out = str(row[4]).strip() if len(row) > 4 and row[4] else ''
-                if in_out == "不计收支":
+                    in_out = str(row[5]).strip() if len(row) > 5 else ''      # 收/支
+                    trans_type = str(row[1]).strip() if len(row) > 1 else ''  # 交易分类
+                    store = str(row[2]).strip() if len(row) > 2 else ''       # 交易对方
+                    # 对方账号 row[3] 不需要
+                    commodity = str(row[4]).strip() if len(row) > 4 else ''   # 商品说明
+                    money_str = str(row[6]).strip() if len(row) > 6 else ''   # 金额
+                    payment = str(row[7]).strip() if len(row) > 7 else ''     # 收/付款方式
+                    search_text = f"{commodity} {store}"
+                    if payment in ["/", "", "None"]:
+                        payment = "支付宝"
+
+                if in_out == "不计收支" or not in_out:
                     continue
-                store = str(row[2]).strip() if len(row) > 2 and row[2] else ''
-                commodity = str(row[3]).strip() if len(row) > 3 and row[3] else ''
-                money_str = str(row[5]).strip() if len(row) > 5 and row[5] else ''
-                payment = str(row[6]).strip() if len(row) > 6 and row[6] else ''
-                trans_type = str(row[1]).strip() if len(row) > 1 and row[1] else ''
+
+                # 解析金额
                 money_match = re.search(r"-?\d+\.?\d*", money_str)
                 if not money_match:
                     continue
                 money = float(money_match.group(0))
-                if file_type == 'wechat':
-                    if payment in ["零钱", "/", "", "None"]:
-                        payment = "微信钱包"
-                else:
-                    if payment in ["/", "", "None"]:
-                        payment = "支付宝"
-                if file_type == 'wechat':
-                    search_text = f"{store} {commodity}"
-                else:
-                    search_text = f"{commodity} {store}"
+
                 cat1, cat2, cat3, cat4 = self._classify(in_out, search_text)
+
                 data = {
                     'date': date_obj,
                     'in_out': in_out,
@@ -181,16 +222,39 @@ class ProcessingWorker(QThread):
                     'cat3': cat3,
                     'cat4': cat4
                 }
+
                 if cat1 is None or cat2 is None or cat3 is None:
                     unclassified_list.append(data)
                     unclassified_count += 1
                 else:
                     all_data.append(data)
                     processed_count += 1
+
             except Exception as e:
                 print(f"  处理第 {row_idx} 行时出错: {e}")
                 continue
+
         print(f"  成功处理 {processed_count} 笔交易，{unclassified_count} 笔未分类")
+
+    def _match_rules(self, text, rules_str):
+        """匹配规则"""
+        if not rules_str:
+            return False
+        if not isinstance(rules_str, str):
+            return False
+        patterns = rules_str.split('|')
+        for pattern in patterns:
+            pattern = pattern.strip()
+            if not pattern:
+                continue
+            try:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return True
+            except:
+                if pattern.lower() in text.lower():
+                    return True
+        return False
+
 
     def _classify(self, in_out, search_text):
         # 先匹配用户关键词
@@ -223,25 +287,26 @@ class ProcessingWorker(QThread):
                 for third_cat, rules in third_cats.items():
                     if rules and isinstance(rules, str) and self._match_rules(search_text, rules):
                         return main_cat, sub_cat, third_cat, None
-        return None, None, None, None
 
-    def _match_rules(self, text, rules_str):
-        if not rules_str:
+        return None, None, None, None
+        
+        def _match_rules(self, text, rules_str):
+            if not rules_str:
+                return False
+            if not isinstance(rules_str, str):
+                return False
+            patterns = rules_str.split('|')
+            for pattern in patterns:
+                pattern = pattern.strip()
+                if not pattern:
+                    continue
+                try:
+                    if re.search(pattern, text, re.IGNORECASE):
+                        return True
+                except:
+                    if pattern.lower() in text.lower():
+                        return True
             return False
-        if not isinstance(rules_str, str):
-            return False
-        patterns = rules_str.split('|')
-        for pattern in patterns:
-            pattern = pattern.strip()
-            if not pattern:
-                continue
-            try:
-                if re.search(pattern, text, re.IGNORECASE):
-                    return True
-            except:
-                if pattern.lower() in text.lower():
-                    return True
-        return False
 
     def _generate_output(self, all_data, unclassified_list):
         if not self.file_paths:

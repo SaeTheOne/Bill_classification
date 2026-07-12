@@ -1,6 +1,8 @@
 ﻿import os
 from PySide6.QtWidgets import QListWidget, QListWidgetItem
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEvent
+from PySide6.QtGui import QKeyEvent
+
 
 class FileDropListWidget(QListWidget):
     def __init__(self, parent=None):
@@ -43,6 +45,15 @@ class FileDropListWidget(QListWidget):
                 background-color: #e8f0fe;
             }
         """)
+
+    def keyPressEvent(self, event):
+        """监听键盘事件，支持 Delete 键删除"""
+        if event.key() == Qt.Key_Delete:
+            current_row = self.currentRow()
+            if current_row >= 0:
+                self.takeItem(current_row)
+                return
+        super().keyPressEvent(event)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
